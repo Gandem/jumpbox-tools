@@ -7,7 +7,7 @@ environmentuc(){
 }
 
 mainroles(){
-    cat /etc/update-motd.d/95-roles | tail -n+5 | grep -vE '^Instance Type:|^\*\*|^$' | grep -Ev 'common-node|monitoring-client|dog-base|encrypted-storage' | paste -d',' -s -
+    cat /etc/update-motd.d/95-roles | tail -n+6 | grep -vE 'Tags:' | grep -vE '^Instance Type:|^\*\*|^$' | grep -vE '^AZ: ' | grep -Ev 'agent-prod-to-staging|canary-security-logging|common-node|dog-base|encrypted-storage|go-perf|monitoring-client' | paste -d',' -s -
 }
 
 refreshtools(){
@@ -20,7 +20,7 @@ refreshtools(){
 }
 
 deploytools(){
-    rsync -azq --exclude '.jumpbox-tools/.git' --exclude '.oh-my-zsh/.git' --exclude '.oh-my-zsh/themes' ~/.bin ~/.config ~/.gitconfig ~/.jumpbox-tools ~/.oh-my-zsh ~/.tmux.conf ~/.zshenv ~/.zshrc $USER@$1:
+    rsync -azq --exclude '.jumpbox-tools/.git' --exclude '.oh-my-zsh/.git' ~/.bin ~/.jumpbox-tools ~/.oh-my-zsh ~/.zshenv ~/.zshrc $USER@$1:
 }
 
 jr(){
@@ -62,59 +62,6 @@ howold ()
     printf " ago.\n"
 }
 
-howbig() {
-    cat /etc/motd | grep Instance
-}
-
-sudog () {
-    sudo -u dog $@
-}
-
-sudogq () {
-    sudo -u dog dogq $@
-}
-
 mq () {
     sudogq metric_query $@
-}
-
-gosource() {
-    export PATH=~/code/bin:~/go/bin:$PATH
-    export GOPATH=~/code
-    export GOROOT=~/go
-}
-
-goinstall() {
-    cd ~
-    rm -rf ~/go
-    rm -f go*tar.gz
-    wget https://dd-pastebin.s3.amazonaws.com/leo/go1.7.3.linux-amd64.tar.gz
-    tar zxf go1.7.3.linux-amd64.tar.gz -C ~/
-    rm -rf ~/code
-    mkdir -p ~/code/src/github.com/DataDog
-
-    git clone git@github.com:DataDog/dd-go ~/code/src/github.com/DataDog/dd-go
-    git clone git@github.com:DataDog/raclette ~/code/src/github.com/DataDog/raclette
-    gosource
-
-    go get github.com/robfig/glock
-    cd -
-}
-
-knife () {
-    /usr/bin/knife $1 -c /etc/chef/knife.rb ${@:2}
-}
-
-myip() {
-    ip addr show eth0 | grep -oP 'inet 10.\d+.\d+.\d+' | cut -c 6-
-}
-
-lastoffset(){
-    topic=$1
-    partition=$2
-    sudo -u kafka /usr/local/kafka/kafka_*/bin/kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list "$(myip):9092" --topic $topic --partitions $partition --time -1
-}
-
-ksearch() {
-    knife search node $1 -a ec2.placement_availability_zone -a ec2.instance_type -a tags -a roles -a uptime_in_seconds
 }
